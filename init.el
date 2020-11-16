@@ -23,7 +23,7 @@
                  (concat user-emacs-directory "backups")))))
 
 ;; Minimal UI
-(scroll-bar-mode -1)
+;; (scroll-bar-mode -1)
 (tool-bar-mode -1)
 (tooltip-mode -1)
 (menu-bar-mode -1)
@@ -47,9 +47,9 @@
 (show-paren-mode 1)
 
 ;; show whitespace configured to show tabs.
-(require 'whitespace)
-(setq whitespace-style '(tabs tab-mark))
-(global-whitespace-mode t)
+;; (require 'whitespace)
+;; (setq whitespace-style '(tabs tab-mark))
+;; (global-whitespace-mode t)
 
 ;; Enable ido mode
 (require 'ido)
@@ -73,7 +73,7 @@
 (use-package neotree
   :ensure t
   :bind (([f8] . neotree-toggle))
-  :init	     
+  :init
   (setq neo-theme (if (display-graphic-p) 'icons 'arrow)))
 
 
@@ -86,30 +86,30 @@
 
 
 ;; Helm
-(use-package helm
-  :ensure t
-  :init
-  (setq helm-M-x-fuzzy-match t
-        helm-mode-fuzzy-match t
-        helm-buffers-fuzzy-matching t
-        helm-recentf-fuzzy-match t
-        helm-locate-fuzzy-match t
-        helm-semantic-fuzzy-match t
-        helm-imenu-fuzzy-match t
-        helm-completion-in-region-fuzzy-match t
-        helm-candidate-number-list 150
-        helm-split-window-in-side-p t
-        helm-move-to-line-cycle-in-source t
-        helm-echo-input-in-header-line t
-        helm-autoresize-max-height 0
-        helm-autoresize-min-height 20)
-  :config
-  (helm-mode 1))
+;; (use-package helm
+;;   :ensure t
+;;   :init
+;;   (setq helm-M-x-fuzzy-match t
+;;         helm-mode-fuzzy-match t
+;;         helm-buffers-fuzzy-matching t
+;;         helm-recentf-fuzzy-match t
+;;         helm-locate-fuzzy-match t
+;;         helm-semantic-fuzzy-match t
+;;         helm-imenu-fuzzy-match t
+;;         helm-completion-in-region-fuzzy-match t
+;;         helm-candidate-number-list 150
+;;         helm-split-window-in-side-p t
+;;         helm-move-to-line-cycle-in-source t
+;;         helm-echo-input-in-header-line t
+;;         helm-autoresize-max-height 0
+;;         helm-autoresize-min-height 20)
+;;   :config
+;;   (helm-mode 1))
 
 ;; Font and Frame Size
-;;(add-to-list 'default-frame-alist '(font . "mononoki-12"))
-;;(add-to-list 'default-frame-alist '(height . 24))
-;;(add-to-list 'default-frame-alist '(width . 80))
+(add-to-list 'default-frame-alist '(font . "mononoki-12"))
+(add-to-list 'default-frame-alist '(height . 24))
+(add-to-list 'default-frame-alist '(width . 80))
 
 ;; Theme
 (use-package monokai-theme
@@ -117,52 +117,39 @@
   :config
   (load-theme 'monokai t))
 
-;; flycheck
-(use-package flycheck :ensure t)
-(use-package flycheck-gometalinter :ensure t)
+;; Go support
+(use-package lsp-mode
+  :ensure t
+  :commands (lsp lsp-deferred)
+  :hook (go-mode . lsp-deferred))
 
-;; go lang setup
-(use-package go-mode :ensure t)
-(use-package go-autocomplete :ensure t)
+;; Set up before-save hooks to format buffer and add/delete imports.
+;; Make sure you don't have other gofmt/goimports hooks enabled.
+(defun lsp-go-install-save-hooks ()
+  (add-hook 'before-save-hook #'lsp-format-buffer t t)
+  (add-hook 'before-save-hook #'lsp-organize-imports t t))
+(add-hook 'go-mode-hook #'lsp-go-install-save-hooks)
 
-(setenv "GOPATH" "/home/jdm")
-(add-to-list 'exec-path "/home/jdm/go/bin")
+;; Optional - provides fancier overlays.
+(use-package lsp-ui
+  :ensure t
+  :commands lsp-ui-mode)
 
-(defun auto-complete-for-go ()
-  (auto-complete-mode 1))
-(add-hook 'go-mode-hook 'auto-complete-for-go)
+;; Company mode is a standard completion package that works well with lsp-mode.
+(use-package company
+  :ensure t
+  :config
+  ;; Optionally enable completion-as-you-type behavior.
+  (setq company-idle-delay 0)
+  (setq company-minimum-prefix-length 1))
 
-(with-eval-after-load 'go-mode
-  (require 'go-autocomplete))
+;; Optional - provides snippet support.
+(use-package yasnippet
+  :ensure t
+  :commands yas-minor-mode
+  :hook (go-mode . yas-minor-mode))
 
-(setq flycheck-gometalinter-vendor t)
-(setq flycheck-gometalinter-disable-all t)
-(setq flycheck-gometalinter-enable-linters '("vet", "goimports", "vetshadow", "ineffassign", "golint", "inefassign", "goconst"))
+(defun my-go-setup ()
+  (setq tab-width 4))
 
-(defun my-go-mode-hook ()
-  ; Use goimports instead of go-fmt
-  (setq gofmt-command "goimports")
-  ; Call Gofmt before saving
-  (add-hook 'before-save-hook 'gofmt-before-save)
-  ; Godef jump key binding
-  (local-set-key (kbd "M-.") 'godef-jump)
-  (local-set-key (kbd "M-*") 'pop-tag-mark))
-(add-hook 'go-mode-hook 'my-go-mode-hook)
-
-
-
-
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(package-selected-packages
-   (quote
-    (monokai use-package neotree magit helm doom-themes))))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
+(add-hook 'go-mode-hook 'my-go-setup)
